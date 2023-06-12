@@ -1,6 +1,7 @@
 <template>
   <input 
     :value="modelValue"
+    :placeholder="placeholder"
     @input="updateValue"
     class="create-form-field__input form-control form-control-lg" type="text" placeholder="Любое название"
   >
@@ -12,6 +13,7 @@ export default {
 
   props: {
     modelValue: String,
+    placeholder: String,
   },
 
   methods: {

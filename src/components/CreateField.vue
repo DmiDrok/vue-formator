@@ -9,31 +9,41 @@
         <div class="modal-body">
           <form>
             <div class="mb-3">
-              <label for="recipient-name" class="col-form-label">Заголовок поля:</label>
-              <input type="text" class="form-control" id="recipient-name">
+              <label for="field-title" class="col-form-label">Заголовок поля:</label>
+              <input
+                v-model="field.title"
+                type="text" class="form-control"
+                id="field-title"
+              >
             </div>
             <div class="mb-3">
-              <label for="message-text" class="col-form-label">Текст под полем (необязательно):</label>
-              <textarea class="form-control" id="message-text"></textarea>
+              <label for="field-text" class="col-form-label">Текст под полем (необязательно):</label>
+              <textarea 
+                v-model="field.text"
+                class="form-control"
+                id="field-text"
+              ></textarea>
             </div>
             <div class="mb-3">
-              <label class="col-form-label">Тип поля:</label>
+              <label for="field-type" class="col-form-label">Тип поляяя:</label>
               <div class="dropdown">
-                <button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  Выберите тип поля:
-                </button>
-                <ul class="dropdown-menu">
-                  <li><a class="dropdown-item" href="#">Текстовое</a></li>
-                  <li><a class="dropdown-item" href="#">Группа</a></li>
-                  <li><a class="dropdown-item" href="#">Выпадающее</a></li>
-                </ul>
+                <select v-model="field.type" id="field-type" class="btn btn-outline-success dropdown-toggle">
+                  <option value="text">Текстовое</option>
+                  <option value="group">Группа</option>
+                  <option value="dropdown">Выпадающее</option>
+                </select>
               </div>
             </div>
           </form>
         </div>
         <div class="modal-footer">
           <button @click="closePopup" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-          <button type="button" class="btn btn-success">Создать поле</button>
+          <button
+            :disabled="createBtnDisabled"
+            @click="makeField"
+            type="button"
+            class="btn btn-success"
+          >Создать поле</button>
         </div>
       </div>
     </div>
@@ -44,9 +54,29 @@
 export default {
   name: '',
 
+  data() {
+    return {
+      field: {
+        name: 'title',
+        title: '',
+        text: '',
+        placeholder: '',
+        type: 'text',
+        target: null,
+        value: '',
+      },
+      createBtnDisabled: true,
+    }
+  },
+
   methods: {
     closePopup() {
       this.$router.push({ name: 'creation' });
+    },
+
+    makeField() {
+      this.$emit('makeField', this.field);
+      this.closePopup();
     }
   },
 
@@ -57,6 +87,18 @@ export default {
   beforeUnmount() {
     this.$store.commit('setPopupHide');
   },
+
+  watch: {
+    field: {
+      handler() {
+        if (this.field.title.length >= 5) {
+          this.createBtnDisabled = false;
+        }
+      },
+
+      deep: true,
+    }
+  }
 }
 </script>
 

@@ -4,29 +4,44 @@
       <div class="container create-form__container">
         <div class="create-form__row py-3">
 
-          <div class="create-form-field-title create-form-field card border border-success rounded-1 border-3">
+          <div
+            v-for="field in fields"
+            :key="field.id"
+            class="create-form-field-title create-form-field card border border-success rounded-1 border-3">
             <div class="create-form-field__header card-header p-3 mb-2">
-              <h3 class="create-form-field__title card-title">Выберите название создаваемой формы:</h3>
-              <p class="create-form-field__text card-text">Это название будет видно остальным пользователям, которые будут проходить ваш составленный опрос</p>
+              <h3 class="create-form-field__title card-title">{{ field.title }}</h3>
+              <p class="create-form-field__text card-text">{{ field.text }}</p>
             </div>
 
             <div class="create-form-field__body card-body">
               <div class="row">
                 <div class="col">
                   <FieldInput 
+                    v-if="field.type === 'text'"
                     :autofocus="!$store.state.showPopup"
-                    v-model="activeInput.value"
-                    ref="titleInput"
+                    :placeholder="field.placeholder"
+                    v-model="field.value"
+                    ref="lastField"
                     @keyup.ctrl="clearActiveInput"
-                    @focus="onActiveInputFocus"
+                    @focus="onActiveInputFocus($event, field)"
                     @blur="onActiveInputBlur" 
                   />
                 </div>
 
-                <div class="col-1 d-flex justify-content-center align-items-center">
-                  <ButtonClear
-                    @click="clearActiveInput"
-                    :disabled="disabledClearButton" />
+                <div :class="field.id !== 1 ? 'col-md-2' : 'col-md-1'" class="col-12 d-flex justify-content-center align-items-center py-3 py-md-0">
+                  <div class="row flex-nowrap">
+                    <div class="col">
+                      <ButtonClear
+                        @click="field.value = ''"
+                        :disabled="field.value.length === 0" />
+                    </div>
+
+                    <div v-if="field.id !== 1" class="col">
+                      <button @click="deleteField(field)" class="btn btn-danger">
+                        <img src="@/assets/icons/trash-icon.svg" alt="" aria-hidden="true">
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -43,7 +58,9 @@
 
     <router-view v-slot="{ Component }">
       <transition name="fade" mode="out-in">
-        <component :is="Component" />
+        <component
+          @makeField="appendNewField"
+          :is="Component" />
       </transition>
     </router-view>
   </main>
@@ -65,48 +82,94 @@ export default {
   data() {
     return {
       title: '',
-      activeInput: {
-        target: null,
-        value: '',
-      },
       disabledClearButton: true,
       disabledMoreButton: true,
       showTooltip: false,
+      activeField: null,
+      
+      // Массив всех полей
+      fields: [
+        { 
+          id: 1,
+          name: 'title',
+          title: 'Выберите название создаваемой формы:', text: 'Это название будет видно остальным пользователям, которые будут проходить вами составленный опрос. [Обязательно для заполнения]',
+          placeholder: 'Любое название',
+          type: 'text',
+          target: null,
+          value: '',
+        },
+      ]
     }
   },
 
   methods: {
     // Показываем тултип только при блюре инпута
     onActiveInputBlur() {
-      this.showTooltip = !this.disabledMoreButton;
+      if (this.$store.state.userIntro) {
+        this.showTooltip = !this.disabledMoreButton;
+      }
     },
 
-    onActiveInputFocus(event) {
-      this.activeInput.target = event.target; // FIX ME; Значение должно приходить из цикла в <template>
-      this.activeInput.value = event.target.value;
+    onActiveInputFocus(event, field) {
+      this.activeField = field;
+
+      this.activeField.target = event.target;
+      this.activeField.value = event.target.value;
+
     },
 
     clearActiveInput(event) {
       const delBtnKeyCode = 46;
       if ([delBtnKeyCode, undefined].includes(event.keyCode)) {
-        this.activeInput.value = '';
+        this.activeField.value = '';
       }
     },
 
     goToCreateField() {
       this.$router.push({ name: 'create-new-field' });
+    },
+
+    appendNewField(field) {
+      field.id = this.fields.at(-1).id + 1;
+      this.fields.push(field);
+      
+      this.$store.commit('setUserOutIntro');
+      this.showTooltip = false;
+      this.setFocusToLastField();
+    },
+
+    deleteField(fieldToDel) {
+      this.fields = this.fields.filter((field) => field.id !== fieldToDel.id);
+
+      this.setFocusToLastField();
+    },
+
+    setFocusToLastField() {
+      setTimeout(() => {
+        this.$refs.lastField.at(-1).$el.focus()
+      }, 0);
     }
   },
 
   watch: {
-    activeInput: {
+    activeField: {
+      // Помещаем слежение за activeField сюда - и получаем выгоду x2
+      // Поскольку: activeField - последнее поле, а также - мы его и проверяем
+      // Не будь такого - кнопка "Ещё" - горела бы при вводе на любом, а не на последнем
       handler() {
-        this.disabledClearButton = this.activeInput.value.length === 0;
-
-        this.disabledMoreButton = this.activeInput.value.length < 5 || this.$store.state.showPopup;
-        this.showTooltip = !this.disabledMoreButton;        
+        if (this.$store.state.userIntro) {
+          this.disabledMoreButton = this.fields.at(-1).value.length < 5 || this.$store.state.showPopup;
+          this.showTooltip = !this.disabledMoreButton;        
+        }
       },
       deep: true,
+    }
+  },
+
+  mounted() {
+    if (!this.$store.state.userIntro) {
+      this.disabledMoreButton = false;
+      this.showTooltip = true;
     }
   }
 }
@@ -114,5 +177,9 @@ export default {
 
 <style scoped>
 
+/* Field */
+.create-form-field {
+  margin-bottom: 30px;
+}
 
 </style>
