@@ -6,6 +6,7 @@ const store = createStore({
     return {
       showPopup: false,
       userIntro: true, // Пользователь по умолчанию в процессе обучения
+      minValueLength: 5,
     }
   },
 

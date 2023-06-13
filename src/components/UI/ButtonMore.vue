@@ -6,7 +6,7 @@
    data-bs-toggle="tooltip"
    data-bs-placement="bottom"
    title="Добавить поле"
-   class="create-form__add-field btn btn-success my-3 mx-auto d-block">
+   class="create-form__add-field btn btn-success mx-auto d-block">
     <img src="@/assets/icons/add-icon.svg" alt="" aria-hidden="true">
    </button>
 </template>
@@ -24,10 +24,6 @@ export default {
     showTooltip() {
       this.tooltip.toggle();
     }
-  },
-
-  methods: {
-    
   },
 
   mounted() {

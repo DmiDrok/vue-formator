@@ -16,7 +16,15 @@ export default {
 
   methods: {
     goToCreating() {
+      localStorage.setItem('oldUser', true);
       this.$router.push({ name: 'creation' });
+    }
+  },
+
+  mounted() {
+    // Если пользователь уже был на сайте - сразу перенаправляем его на создание формы
+    if (localStorage.getItem('oldUser')) {
+      this.goToCreating();
     }
   }
 }
